@@ -17,7 +17,8 @@ import { z } from "zod";
 import type { ChatGeneration } from "@langchain/core/outputs";
 import { AIMessageChunk } from "@langchain/core/messages";
 import type { ToolCall } from "@langchain/core/messages/tool";
-import type { WatsonxAuth, WatsonxInit } from "@/types/ibm.js";
+
+import type { WatsonxAuth,WatsonxInit } from "../types/ibm.js";
 
 export const authenticateAndSetInstance = ({
   watsonxAIApikey,
@@ -112,7 +113,11 @@ export function _convertToolCallIdToMistralCompatible(
 }
 
 interface WatsonxToolsOutputParserParams<T extends Record<string, any>>
-  extends JsonOutputKeyToolsParserParams<T> {}
+  extends JsonOutputKeyToolsParserParams<T> {
+    keyName: string;
+    returnSingle?: boolean;
+    zodSchema?: z.ZodType<T>;
+  }
 
 export class WatsonxToolsOutputParser<
   T extends Record<string, any> = Record<string, any>
