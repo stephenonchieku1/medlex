@@ -25,6 +25,9 @@ export default defineConfig({
     out: 'dist', 
   },
   vite: {
+    server: {
+      allowedHosts: ['medlex-ai.onrender.com', 'localhost'],  
+    },
     ssr: {
       noExternal: ["react-dropzone"],
     },
