@@ -7,6 +7,6 @@ frontend:
         deploy:
             - npm install
     subdomain: medlex
-name: medlex
+name: medlex-ai
 region: us-east-1
 yamlVersion: 2
