@@ -2,6 +2,9 @@
 	"version": 3,
 	"routes": [
 		{
+			"handle": "filesystem"
+		},
+		{
 			"src": "^/_astro/(.*)$",
 			"headers": {
 				"cache-control": "public, max-age=31536000, immutable"
@@ -9,38 +12,39 @@
 			"continue": true
 		},
 		{
-			"handle": "filesystem"
-		},
-		{
-			"src": "^\\/_image$",
+			"src": "^/_server-islands/([^/]+?)/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/api\\/confirmMed\\/?$",
+			"src": "^/_image/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/api\\/fda\\/?$",
+			"src": "^/api/confirmMed/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/api\\/img-analyze\\/?$",
+			"src": "^/api/fda/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/api\\/med-analyze\\/?$",
+			"src": "^/api/img-analyze/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/api\\/sideEffect\\/?$",
+			"src": "^/api/med-analyze/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/api\\/watsonx\\/?$",
+			"src": "^/api/sideEffect/?$",
 			"dest": "_render"
 		},
 		{
-			"src": "^\\/$",
+			"src": "^/api/watsonx/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/$",
 			"dest": "_render"
 		}
 	]
