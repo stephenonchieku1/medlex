@@ -1,0 +1,47 @@
+{
+	"version": 3,
+	"routes": [
+		{
+			"src": "^/_astro/(.*)$",
+			"headers": {
+				"cache-control": "public, max-age=31536000, immutable"
+			},
+			"continue": true
+		},
+		{
+			"handle": "filesystem"
+		},
+		{
+			"src": "^\\/_image$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/api\\/confirmMed\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/api\\/fda\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/api\\/img-analyze\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/api\\/med-analyze\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/api\\/sideEffect\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/api\\/watsonx\\/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^\\/$",
+			"dest": "_render"
+		}
+	]
+}
