@@ -17,9 +17,13 @@ export default defineConfig({
 
   output: "server",
   adapter: vercel({
-    functionPerRoute: false,  
+    functionPerRoute: false, 
+    runtime: 'nodejs20.x',
   
   }),
+  buildOptions: {
+    out: 'dist', // This specifies the build directory
+  },
   vite: {
     ssr: {
       noExternal: ["react-dropzone"],
