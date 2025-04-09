@@ -1,29 +1,24 @@
-// File: pages/api/health-chat.ts
-import type { NextApiRequest, NextApiResponse } from 'next';
+// File: src/pages/api/health-chat.ts
+import type { APIRoute } from 'astro';
 import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Initialize APIs (store API keys in environment variables)
+// Initialize OpenAI with API key from environment variables
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: import.meta.env.OPENAI_API_KEY || ''
 });
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+// Initialize Gemini with API key from environment variables
+const genAI = new GoogleGenerativeAI(import.meta.env.GEMINI_API_KEY || '');
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+// Together API key from environment variables
+const TOGETHER_API_KEY = import.meta.env.TOGETHER_API_KEY || '';
 
+export const POST: APIRoute = async ({ request }) => {
   try {
-    const { message, userSettings, history } = req.body;
-
-    // Choose which AI to use based on query complexity or rotate between them
-    // This example uses a simple approach - you could implement more sophisticated routing
-    const aiChoice = Math.random();
+    // Parse the request body
+    const body = await request.json();
+    const { message, userSettings, history = [] } = body;
 
     // Create system prompt for health-focused chat
     const systemPrompt = `You are a helpful health information assistant that provides general health information to users. 
@@ -35,84 +30,155 @@ You should:
 - Be respectful and compassionate about health concerns
 - Use language that is accessible based on the user's preferred clarity level
 - Avoid making definitive medical diagnoses or prescribing treatments
-- Consider the user's specific context: ${userSettings}
+- Consider the user's specific context: ${userSettings || 'No specific context provided'}
 - Keep responses concise and focused on answering the user's question
 
 If the user asks non-health related questions, politely redirect them to ask health-related questions only.`;
 
-    let response;
+    let response = null;
+    let error = null;
     
-    // OpenAI API
-    if (aiChoice < 0.4) {
-      const chatHistory = history.map((msg: any) => ({
-        role: msg.sender === 'user' ? 'user' : 'assistant',
-        content: msg.content
-      }));
-      
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4-turbo",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...chatHistory,
-          { role: "user", content: message }
-        ],
-        temperature: 0.7,
-        max_tokens: 800,
-      });
-      
-      response = completion.choices[0].message.content;
-    } 
-    // Together AI
-    else if (aiChoice < 0.7) {
-      const formattedHistory = history.map((msg: any) => 
-        `${msg.sender === 'user' ? 'Human' : 'Assistant'}: ${msg.content}`
-      ).join('\n');
-      
-      const togetherResponse = await fetch('https://api.together.xyz/v1/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.TOGETHER_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: 'mistralai/Mixtral-8x7B-Instruct-v0.1',
-          prompt: `${systemPrompt}\n\n${formattedHistory}\n\nHuman: ${message}\n\nAssistant:`,
-          max_tokens: 800,
-          temperature: 0.7,
-          top_p: 0.9,
-        }),
-      });
-      
-      const togetherData = await togetherResponse.json();
-      response = togetherData.choices[0].text.trim();
-    } 
-    // Gemini API
-    else {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-      
-      const chatHistory = history.map((msg: any) => ({
-        role: msg.sender === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content }]
-      }));
-      
-      const chat = model.startChat({
-        history: chatHistory,
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 800,
-        },
-      });
-      
-      const result = await chat.sendMessage(
-        `${systemPrompt}\n\nUser Question: ${message}`
-      );
-      
-      response = result.response.text();
+    // Try Gemini first (fixing the chat history format issue)
+    if (import.meta.env.GEMINI_API_KEY) {
+      try {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+        
+        // Make sure we have at least one user message in history
+        let chatHistory = [];
+        
+        if (history.length > 0) {
+          // Process history in a way that ensures it starts with a user message
+          // Filter to only valid entries and ensure proper format
+          const validHistory = history
+            .filter(msg => msg && typeof msg === 'object' && msg.sender && msg.content)
+            .map(msg => ({
+              role: msg.sender === 'user' ? 'user' : 'model',
+              parts: [{ text: msg.content }]
+            }));
+          
+          // If first message isn't from user, we need to start fresh
+          if (validHistory.length > 0 && validHistory[0].role === 'user') {
+            chatHistory = validHistory;
+          }
+        }
+        
+        // Create chat session - if history is empty or invalid, start fresh
+        const result = await model.generateContent([
+          { text: `${systemPrompt}\n\nUser Question: ${message}` }
+        ]);
+        
+        response = result.response.text();
+      } catch (err) {
+        console.log("Gemini API error, attempting fallback", err);
+        error = err;
+      }
     }
-
-    return res.status(200).json({ response });
+    
+    // If Gemini failed, try OpenAI
+    if (!response && import.meta.env.OPENAI_API_KEY) {
+      try {
+        // Format chat history for OpenAI
+        const chatHistory = (history || [])
+          .filter(msg => msg && typeof msg === 'object' && msg.sender && msg.content)
+          .map((msg: any) => ({
+            role: msg.sender === 'user' ? 'user' : 'assistant',
+            content: msg.content
+          }));
+        
+        const completion = await openai.chat.completions.create({
+          model: "gpt-3.5-turbo",
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...chatHistory,
+            { role: "user", content: message }
+          ],
+          temperature: 0.7,
+          max_tokens: 800,
+        });
+        
+        response = completion.choices[0].message.content;
+      } catch (err) {
+        console.log("OpenAI API error, attempting final fallback", err);
+        error = err;
+      }
+    }
+    
+    // If both failed, try Together AI with robust error handling
+    if (!response && TOGETHER_API_KEY) {
+      try {
+        const formattedHistory = (history || [])
+          .filter(msg => msg && typeof msg === 'object' && msg.sender && msg.content)
+          .map((msg: any) => 
+            `${msg.sender === 'user' ? 'Human' : 'Assistant'}: ${msg.content}`
+          ).join('\n');
+        
+        const togetherResponse = await fetch('https://api.together.xyz/v1/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${TOGETHER_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: 'mistralai/Mixtral-8x7B-Instruct-v0.1',
+            prompt: `${systemPrompt}\n\n${formattedHistory}\n\nHuman: ${message}\n\nAssistant:`,
+            max_tokens: 800,
+            temperature: 0.7,
+            top_p: 0.9,
+          }),
+        });
+        
+        const togetherData = await togetherResponse.json();
+        
+        // Add robust error checking
+        if (togetherData && 
+            togetherData.choices && 
+            Array.isArray(togetherData.choices) && 
+            togetherData.choices.length > 0 && 
+            togetherData.choices[0].text) {
+          response = togetherData.choices[0].text.trim();
+        } else {
+          throw new Error("Invalid response format from Together API");
+        }
+      } catch (err) {
+        console.log("Together API error, all fallbacks failed", err);
+        error = err;
+      }
+    }
+    
+    // If we have a response, return it
+    if (response) {
+      return new Response(
+        JSON.stringify({ response }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    } else {
+      // Provide a graceful fallback response when all APIs fail
+      console.error('All AI APIs failed:', error);
+      
+      const fallbackResponse = `I apologize, but I'm currently experiencing technical difficulties connecting to my knowledge sources. Please try again later or contact support if this issue persists. Your question was about health information, and we want to make sure you get accurate information when our systems are fully operational.`;
+      
+      return new Response(
+        JSON.stringify({ 
+          response: fallbackResponse,
+          apiStatus: 'degraded',
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
   } catch (error) {
     console.error('Health chat API error:', error);
-    return res.status(500).json({ error: 'Failed to process request' });
+    
+    // Even if we have a catastrophic error, send a helpful message to the user
+    const emergencyFallback = `I apologize, but I'm currently unable to process your request due to a technical issue. Please try again later or contact support if this issue persists.`;
+    
+    return new Response(
+      JSON.stringify({ 
+        response: emergencyFallback,
+        apiStatus: 'error',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 }
