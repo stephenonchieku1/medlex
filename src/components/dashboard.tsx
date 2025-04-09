@@ -12,6 +12,7 @@ import { showToast } from "../lib/showToast";
 import Header from "../components/dashboard/Header";
 import SearchSection from "../components/dashboard/SearchSection";
 import MedicineInfo from "../components/dashboard/MedicineInfo";
+import HealthChat from "../components/healthChat";
 // Add at the top of the file, after imports
 declare global {
   interface Window {
@@ -270,6 +271,14 @@ export default function Dashboard() {
             setLanguageQuery={setLanguageQuery}
           />
         )}
+
+          <div className="mt-6 bg-white rounded-lg shadow-md">
+            <h2 className="text-xl font-semibold p-4 border-b">Health Assistant Chat</h2>
+            <HealthChat 
+              userSettings={settings}
+              selectedClarity={selectedClarity}
+            />
+          </div>
 
         <div className="bg-white rounded-lg shadow-md p-4">
           <div className="flex space-x-4 mb-4 ">
