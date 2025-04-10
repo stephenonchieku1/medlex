@@ -127,7 +127,7 @@ Language: ${userSettings.language.name}`;
         recognition.lang = 'en-US';
         recognition.interimResults = false;
         
-        recognition.onresult = (event) => {
+        recognition.onresult = (event: { results: { transcript: any; }[][]; }) => {
           const transcript = event.results[0][0].transcript;
           setInputMessage(transcript);
         };
