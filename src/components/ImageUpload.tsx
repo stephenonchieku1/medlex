@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 interface ImageUploadProps {
-  onImageCapture: (file: File) => Promise<void>;
+  onImageCapture: (file: File) => Promise<any>;
   isAnalyzing: boolean;
 }
 
@@ -49,52 +49,51 @@ export default function ImageUpload({
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div
+      {...getRootProps()}
+      className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-400 transition-colors"
+    >
       {preview ? (
-        <div className="relative w-full">
+        <div className="relative mb-4">
           <img 
             src={preview} 
             alt="Preview" 
-            className="w-full max-h-64 object-contain rounded-lg" 
+            className="mx-auto rounded-md max-h-48 object-contain" 
           />
           {!isAnalyzing && (
-            <button 
+            <button
               onClick={clearPreview}
-              className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors"
+              className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full"
             >
-              <X className="h-4 w-4" />
+              <X size={16} />
             </button>
           )}
         </div>
       ) : null}
       
-      <div
-        {...getRootProps()}
-        className={`flex-1 cursor-pointer ${
-        isDragActive ? "bg-blue-700" : "bg-blue-500"
-      } 
-      text-white p-3 rounded-lg flex items-center justify-center space-x-4
-      hover:bg-[#C62E2E] transition-colors relative`}
-      >
-        <input {...getInputProps()} />
-        {isAnalyzing ? (
-          <Loader2 className="h-6 w-6 animate-spin" />
-        ) : (
-          <Camera className="h-6 w-6" />
-        )}
-        <span>
+      <input {...getInputProps()} />
+      
+      <div className="flex flex-col items-center justify-center space-y-2">
+        <div className="bg-blue-100 p-3 rounded-full">
+          {isAnalyzing ? (
+            <Loader2 className="h-6 w-6 text-blue-500 animate-spin" />
+          ) : (
+            <Camera className="h-6 w-6 text-blue-500" />
+          )}
+        </div>
+        <p className="text-sm text-gray-600 font-medium">
           {isDragActive
             ? "Drop the image here"
             : isAnalyzing
             ? "Analyzing..."
-            : preview 
-              ? "Change Image" 
+            : preview
+              ? "Change Image"
               : "Scan Medicine"}
-        </span>
+        </p>
         {error && (
-          <div className="absolute bottom-0 left-0 right-0 bg-red-500 text-white p-2 text-sm text-center">
+          <p className="text-xs text-red-500 mt-2">
             {error}
-          </div>
+          </p>
         )}
       </div>
     </div>
