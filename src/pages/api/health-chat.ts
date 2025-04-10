@@ -13,12 +13,6 @@ interface OpenAIMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
 }
-
-interface GeminiMessage {
-  role: 'user' | 'model';
-  parts: { text: string }[];
-}
-
 // Initialize OpenAI with API key from environment variables
 const openai = new OpenAI({
   apiKey: import.meta.env.OPENAI_API_KEY || ''
@@ -54,36 +48,44 @@ If the user asks non-health related questions, politely redirect them to ask hea
     let response: string | null = null;
     let error: unknown = null;
     
-    // Try Gemini first (fixing the chat history format issue)
+    // Try Gemini first
     if (import.meta.env.GEMINI_API_KEY) {
       try {
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
         
-        // Make sure we have at least one user message in history
-        let chatHistory: GeminiMessage[] = [];
-        
         if (history.length > 0) {
           // Process history in a way that ensures it starts with a user message
           // Filter to only valid entries and ensure proper format
-          const validHistory = (history as ChatMessage[])
+          const formattedHistory = (history as ChatMessage[])
             .filter(msg => msg && typeof msg === 'object' && msg.sender && msg.content)
             .map((msg: ChatMessage) => ({
               role: msg.sender === 'user' ? 'user' : 'model',
               parts: [{ text: msg.content }]
             }));
           
-          // If first message isn't from user, we need to start fresh
-          if (validHistory.length > 0 && validHistory[0].role === 'user') {
-            chatHistory = validHistory;
+          // Check if we can use the history - if first message is from user
+          if (formattedHistory.length > 0 && formattedHistory[0].role === 'user') {
+            // Use chat session with history
+            const chat = model.startChat({
+              history: formattedHistory as any,
+            });
+            
+            const result = await chat.sendMessage(message);
+            response = result.response.text();
+          } else {
+            // No valid history, use simple generate
+            const result = await model.generateContent([
+              { text: `${systemPrompt}\n\nUser Question: ${message}` }
+            ]);
+            response = result.response.text();
           }
+        } else {
+          // No history, use simple generate
+          const result = await model.generateContent([
+            { text: `${systemPrompt}\n\nUser Question: ${message}` }
+          ]);
+          response = result.response.text();
         }
-        
-        // Create chat session - if history is empty or invalid, start fresh
-        const result = await model.generateContent([
-          { text: `${systemPrompt}\n\nUser Question: ${message}` }
-        ]);
-        
-        response = result.response.text();
       } catch (err) {
         console.log("Gemini API error, attempting fallback", err);
         error = err;
