@@ -91,18 +91,7 @@ The user requested that you use ${selectedClarity.label.toLowerCase()} clarity l
     return {
       fdaData,
       sideEffectData,
-      // async getWatsonData() {
-      //   const watsonResponse = await fetch("/api/watsonx", {
-      //     method: "POST",
-      //     headers: { "Content-Type": "application/json" },
-      //     body: JSON.stringify({
-      //       fdaData,
-      //       sideEffectData,
-      //       userSettings: userSettingsText,
-      //     }),
-      //   });
-      //   return await watsonResponse.json();
-      // },
+     
     };
   } catch (error) {
     throw error;
@@ -151,17 +140,6 @@ export default function Dashboard() {
         const result = await api_calls(searchQuery, settings, selectedClarity);
         setFdaData(result.fdaData);
         setSideEffectData(result.sideEffectData);
-
-        // // Start Watson API call in background
-        // result
-        //   .getWatsonData()
-        //   .then((watsonData) => {
-        //     showToast("Watson response retrieved", "success");
-        //   })
-        //   .catch((error) => {
-        //     showToast("Watson processing failed", "error");
-        //   });
-
         showToast("Medicine information retrieved successfully", "success");
       } catch (error) {
         showToast(
@@ -228,15 +206,7 @@ export default function Dashboard() {
         setFdaData(result.fdaData);
         setSideEffectData(result.sideEffectData);
 
-        // // Start Watson API call in background
-        // result
-        //   .getWatsonData()
-        //   .then((watsonData) => {
-        //     showToast("Watson response retrieved", "success");
-        //   })
-        //   .catch((error) => {
-        //     showToast("Watson processing failed", "errorj");
-        //   });
+     
       } else {
         showToast("Could not detect medicine name clearly", "error");
       }
@@ -272,8 +242,8 @@ export default function Dashboard() {
           />
         )}
 
-          <div className="mt-6 bg-white rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold p-4 border-b">Health Assistant Chat</h2>
+          <div className="mt-6 bg-white rounded-lg shadow-md p-4">
+            <h2 className="text-xl font-semibold p-4 border-b">Medlex ai healthcare Assistant Chat</h2>
             <HealthChat 
               userSettings={settings}
               selectedClarity={selectedClarity}
@@ -281,11 +251,14 @@ export default function Dashboard() {
           </div>
 
         <div className="bg-white rounded-lg shadow-md p-4">
-          <div className="flex space-x-4 mb-4 ">
+          <div className="flex space-x-3 mb-3 ">
             <ImageUpload
               onImageCapture={handleImageCapture}
               isAnalyzing={isAnalyzing}
             />
+          
+          </div>
+          <div className="p-4 max-w-md ">
             <SearchSection
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
