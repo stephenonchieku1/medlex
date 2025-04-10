@@ -1821,40 +1821,39 @@ function ImageUpload({
     e.stopPropagation();
     setPreview(null);
   };
-  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-4", children: [
-    preview ? /* @__PURE__ */ jsxs("div", { className: "relative w-full", children: [
-      /* @__PURE__ */ jsx(
-        "img",
-        {
-          src: preview,
-          alt: "Preview",
-          className: "w-full max-h-64 object-contain rounded-lg"
-        }
-      ),
-      !isAnalyzing && /* @__PURE__ */ jsx(
-        "button",
-        {
-          onClick: clearPreview,
-          className: "absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors",
-          children: /* @__PURE__ */ jsx(X, { className: "h-4 w-4" })
-        }
-      )
-    ] }) : null,
-    /* @__PURE__ */ jsxs(
-      "div",
-      {
-        ...getRootProps(),
-        className: `flex-1 cursor-pointer ${isDragActive ? "bg-emerald-100" : "bg-emerald-500"} text-white p-3 rounded-lg flex items-center justify-center space-x-2 
-        hover:bg-emerald-600 transition-colors relative ${preview ? "mt-2" : ""}`,
-        children: [
-          /* @__PURE__ */ jsx("input", { ...getInputProps() }),
-          isAnalyzing ? /* @__PURE__ */ jsx(Loader2, { className: "h-6 w-6 animate-spin" }) : /* @__PURE__ */ jsx(Camera, { className: "h-6 w-6" }),
-          /* @__PURE__ */ jsx("span", { children: isDragActive ? "Drop the image here" : isAnalyzing ? "Analyzing..." : preview ? "Change Image" : "Scan Medicine" }),
-          error && /* @__PURE__ */ jsx("div", { className: "absolute bottom-0 left-0 right-0 bg-red-500 text-white p-2 text-sm text-center", children: error })
-        ]
-      }
-    )
-  ] });
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      ...getRootProps(),
+      className: "border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-400 transition-colors",
+      children: [
+        preview ? /* @__PURE__ */ jsxs("div", { className: "relative mb-4", children: [
+          /* @__PURE__ */ jsx(
+            "img",
+            {
+              src: preview,
+              alt: "Preview",
+              className: "mx-auto rounded-md max-h-48 object-contain"
+            }
+          ),
+          !isAnalyzing && /* @__PURE__ */ jsx(
+            "button",
+            {
+              onClick: clearPreview,
+              className: "absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full",
+              children: /* @__PURE__ */ jsx(X, { size: 16 })
+            }
+          )
+        ] }) : null,
+        /* @__PURE__ */ jsx("input", { ...getInputProps() }),
+        /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center justify-center space-y-2", children: [
+          /* @__PURE__ */ jsx("div", { className: "bg-blue-100 p-3 rounded-full", children: isAnalyzing ? /* @__PURE__ */ jsx(Loader2, { className: "h-6 w-6 text-blue-500 animate-spin" }) : /* @__PURE__ */ jsx(Camera, { className: "h-6 w-6 text-blue-500" }) }),
+          /* @__PURE__ */ jsx("p", { className: "text-sm text-gray-600 font-medium", children: isDragActive ? "Drop the image here" : isAnalyzing ? "Analyzing..." : preview ? "Change Image" : "Scan Medicine" }),
+          error && /* @__PURE__ */ jsx("p", { className: "text-xs text-red-500 mt-2", children: error })
+        ] })
+      ]
+    }
+  );
 }
 
 const showToast = (message, type) => {
@@ -2287,11 +2286,11 @@ function HealthChat({ userSettings, selectedClarity }) {
     setIsProcessing(true);
     try {
       const userSettingsText = `User Info:
-Sex: ${userSettings.sex.charAt(0).toUpperCase() + userSettings.sex.slice(1)}
-Medical Conditions: ${userSettings.conditions.join(", ") || "None specified"}
-Age Range: ${userSettings.age.range}
-Clarity Level: ${selectedClarity.label}
-Language: ${userSettings.language.name}`;
+        Sex: ${userSettings.sex.charAt(0).toUpperCase() + userSettings.sex.slice(1)}
+        Medical Conditions: ${userSettings.conditions.join(", ") || "None specified"}
+        Age Range: ${userSettings.age.range}
+        Clarity Level: ${selectedClarity.label}
+        Language: ${userSettings.language.name}`;
       const response = await fetch("/api/health-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2313,10 +2312,6 @@ Language: ${userSettings.language.name}`;
         timestamp: /* @__PURE__ */ new Date()
       };
       setMessages((prev) => [...prev, assistantMessage]);
-      if (window.sendWatsonMessage) {
-        await window.sendWatsonMessage(`User question: ${inputMessage}
-Assistant response: ${data.response}`);
-      }
     } catch (error) {
       const errorMessage = {
         id: Date.now().toString() + "-error",
@@ -2364,10 +2359,10 @@ Assistant response: ${data.response}`);
       setIsListening(false);
     }
   };
-  return /* @__PURE__ */ jsxs("div", { className: "bg-white rounded-lg shadow-md p-4 flex flex-col h-[600px]", children: [
+  return /* @__PURE__ */ jsxs("div", { className: "bg-white rounded-lg shadow-lg p-4 flex flex-col h-[600px]", children: [
     /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between mb-4 pb-3 border-b", children: [
       /* @__PURE__ */ jsx("h2", { className: "text-xl font-semibold text-blue-600", children: "Health Assistant" }),
-      /* @__PURE__ */ jsx("div", { className: "flex gap-2", children: /* @__PURE__ */ jsx("p", { className: "text-sm text-gray-500 italic", children: "Always consult with healthcare professionals for medical advice" }) })
+      /* @__PURE__ */ jsx("div", { className: "flex gap-2", children: /* @__PURE__ */ jsx("p", { className: "text-sm text-black-500 italic", children: "Always consult with healthcare professionals for medical advice" }) })
     ] }),
     /* @__PURE__ */ jsx("div", { className: "flex flex-wrap gap-2 mb-4", children: suggestedQuestions.map((question, index) => /* @__PURE__ */ jsx(
       "button",
@@ -2436,7 +2431,7 @@ Assistant response: ${data.response}`);
         }
       )
     ] }),
-    /* @__PURE__ */ jsx("div", { className: "mt-3 text-xs text-gray-500 text-center", children: "This assistant provides general health information and is not a substitute for professional medical advice." })
+    /* @__PURE__ */ jsx("div", { className: "mt-3 text-xs text-black-500 text-center", children: "This assistant provides general health information and is not a substitute for professional medical advice." })
   ] });
 }
 
@@ -2492,18 +2487,6 @@ ${userSettingsText}`
     return {
       fdaData,
       sideEffectData
-      // async getWatsonData() {
-      //   const watsonResponse = await fetch("/api/watsonx", {
-      //     method: "POST",
-      //     headers: { "Content-Type": "application/json" },
-      //     body: JSON.stringify({
-      //       fdaData,
-      //       sideEffectData,
-      //       userSettings: userSettingsText,
-      //     }),
-      //   });
-      //   return await watsonResponse.json();
-      // },
     };
   } catch (error) {
     throw error;
@@ -2623,8 +2606,8 @@ function Dashboard() {
           setLanguageQuery
         }
       ),
-      /* @__PURE__ */ jsxs("div", { className: "mt-6 bg-white rounded-lg shadow-md", children: [
-        /* @__PURE__ */ jsx("h2", { className: "text-xl font-semibold p-4 border-b", children: "Health Assistant Chat" }),
+      /* @__PURE__ */ jsxs("div", { className: "mt-6 bg-white rounded-lg shadow-md p-4", children: [
+        /* @__PURE__ */ jsx("h2", { className: "text-xl font-semibold p-4 border-b", children: "Medlex ai healthcare Assistant Chat" }),
         /* @__PURE__ */ jsx(
           HealthChat,
           {
@@ -2634,25 +2617,23 @@ function Dashboard() {
         )
       ] }),
       /* @__PURE__ */ jsxs("div", { className: "bg-white rounded-lg shadow-md p-4", children: [
-        /* @__PURE__ */ jsxs("div", { className: "flex space-x-4 mb-4 ", children: [
-          /* @__PURE__ */ jsx(
-            ImageUpload,
-            {
-              onImageCapture: handleImageCapture,
-              isAnalyzing
-            }
-          ),
-          /* @__PURE__ */ jsx(
-            SearchSection,
-            {
-              searchQuery,
-              setSearchQuery,
-              handleSearch,
-              setSelectedMedicine,
-              setImgAnalyzed
-            }
-          )
-        ] }),
+        /* @__PURE__ */ jsx("div", { className: "flex space-x-3 mb-3 ", children: /* @__PURE__ */ jsx(
+          ImageUpload,
+          {
+            onImageCapture: handleImageCapture,
+            isAnalyzing
+          }
+        ) }),
+        /* @__PURE__ */ jsx("div", { className: "p-4 max-w-md ", children: /* @__PURE__ */ jsx(
+          SearchSection,
+          {
+            searchQuery,
+            setSearchQuery,
+            handleSearch,
+            setSelectedMedicine,
+            setImgAnalyzed
+          }
+        ) }),
         selectedMedicine && /* @__PURE__ */ jsx(
           MedicineInfo,
           {
