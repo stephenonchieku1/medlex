@@ -1,3 +1,14 @@
+// Add this to the top of your src/components/healthChat.tsx file
+
+// Declare the global interfaces for SpeechRecognition
+declare global {
+  interface Window {
+    SpeechRecognition?: any;
+    webkitSpeechRecognition?: any;    
+  }
+}
+
+// The rest of your imports
 import { useState, useRef, useEffect } from "react";
 import { Send, Mic, MicOff, Loader2 } from "lucide-react";
 
@@ -121,26 +132,33 @@ Language: ${userSettings.language.name}`;
       setIsListening(true);
       
       if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
+        // Use the Speech Recognition API
+        const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
         
-        recognition.lang = 'en-US';
-        recognition.interimResults = false;
-        
-        recognition.onresult = (event: { results: { transcript: any; }[][]; }) => {
-          const transcript = event.results[0][0].transcript;
-          setInputMessage(transcript);
-        };
-        
-        recognition.onerror = () => {
+        if (SpeechRecognitionAPI) {
+          const recognition = new SpeechRecognitionAPI();
+          
+          recognition.lang = 'en-US';
+          recognition.interimResults = false;
+          
+          recognition.onresult = (event: any) => {
+            const transcript = event.results[0][0].transcript;
+            setInputMessage(transcript);
+          };
+          
+          recognition.onerror = () => {
+            setIsListening(false);
+          };
+          
+          recognition.onend = () => {
+            setIsListening(false);
+          };
+          
+          recognition.start();
+        } else {
+          alert("Failed to initialize speech recognition.");
           setIsListening(false);
-        };
-        
-        recognition.onend = () => {
-          setIsListening(false);
-        };
-        
-        recognition.start();
+        }
       } else {
         alert("Speech recognition is not supported in your browser.");
         setIsListening(false);
