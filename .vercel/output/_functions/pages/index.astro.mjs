@@ -1,11 +1,11 @@
-import { c as createComponent, b as createAstro, r as renderTemplate, e as renderSlot, f as renderHead, g as renderComponent, m as maybeRenderHead } from '../chunks/astro/server_D-QK1L-k.mjs';
+import { c as createComponent, b as createAstro, r as renderTemplate, e as renderSlot, f as renderHead, g as renderComponent, m as maybeRenderHead } from '../chunks/astro/server_COFyh_ip.mjs';
 import 'kleur/colors';
 import 'clsx';
 /* empty css                                 */
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import React, { useMemo, useRef, useReducer, useEffect, useCallback, forwardRef, useImperativeHandle, Fragment as Fragment$1, useState } from 'react';
 import { RadioGroup, Radio, Listbox, ListboxButton, ListboxOptions, ListboxOption, Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption, TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
-import { ChevronDown, Check, Loader2, Camera, HeartPulse, X, Settings, CircleUserRound, Search, Volume2, Info, Pill, AlertTriangle, Leaf } from 'lucide-react';
+import { ChevronDown, Check, Loader2, Camera, HeartPulse, X, Settings, CircleUserRound, Search, Volume2, Info, Pill, AlertTriangle, Leaf, MicOff, Mic, Send } from 'lucide-react';
 import { IoFemale, IoMale } from 'react-icons/io5';
 import PropTypes from 'prop-types';
 import { fromEvent } from 'file-selector';
@@ -23,7 +23,7 @@ const $$Layout = createComponent(($$result, $$props, $$slots) => {
   Astro2.self = $$Layout;
   const { title } = Astro2.props;
   return renderTemplate(_a$1 || (_a$1 = __template$1(['<html lang="en"> <head><meta charset="UTF-8"><meta name="description" content="Astro description"><meta name="viewport" content="width=device-width"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><meta name="generator" content="MedLex+"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet"><script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"><\/script><title>', "</title>", "</head> <body> ", " </body></html>"])), title, renderHead(), renderSlot($$result, $$slots["default"]));
-}, "/home/stephen/medlex/src/layouts/Layout.astro", void 0);
+}, "/home/stephen/medlexy/medlex/src/layouts/Layout.astro", void 0);
 
 const medicalConditions = {
   shared: [
@@ -2222,6 +2222,198 @@ function MedicineInfo({
   ] }) });
 }
 
+function HealthChat({ userSettings, selectedClarity }) {
+  const [messages, setMessages] = useState([
+    {
+      id: "welcome",
+      content: "Hello! I'm your health assistant. How can I help you with your health-related questions today?",
+      sender: "assistant",
+      timestamp: /* @__PURE__ */ new Date()
+    }
+  ]);
+  const [inputMessage, setInputMessage] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const messagesEndRef = useRef(null);
+  const [suggestedQuestions] = useState([
+    "What are common side effects of antibiotics?",
+    "How can I manage my blood pressure naturally?",
+    "What should I know about my medication interactions?",
+    "How much exercise is recommended weekly?"
+  ]);
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!inputMessage.trim()) return;
+    const userMessage = {
+      id: Date.now().toString(),
+      content: inputMessage,
+      sender: "user",
+      timestamp: /* @__PURE__ */ new Date()
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setInputMessage("");
+    setIsProcessing(true);
+    try {
+      const userSettingsText = `User Info:
+Sex: ${userSettings.sex.charAt(0).toUpperCase() + userSettings.sex.slice(1)}
+Medical Conditions: ${userSettings.conditions.join(", ") || "None specified"}
+Age Range: ${userSettings.age.range}
+Clarity Level: ${selectedClarity.label}
+Language: ${userSettings.language.name}`;
+      const response = await fetch("/api/health-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: inputMessage,
+          userSettings: userSettingsText,
+          history: messages.slice(-6)
+          // Send last 6 messages for context
+        })
+      });
+      if (!response.ok) {
+        throw new Error("Failed to get a response");
+      }
+      const data = await response.json();
+      const assistantMessage = {
+        id: Date.now().toString() + "-assistant",
+        content: data.response || "I apologize, but I couldn't process your request. Please try again.",
+        sender: "assistant",
+        timestamp: /* @__PURE__ */ new Date()
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+      if (window.sendWatsonMessage) {
+        await window.sendWatsonMessage(`User question: ${inputMessage}
+Assistant response: ${data.response}`);
+      }
+    } catch (error) {
+      const errorMessage = {
+        id: Date.now().toString() + "-error",
+        content: "I'm sorry, I encountered an error processing your request. Please try again.",
+        sender: "assistant",
+        timestamp: /* @__PURE__ */ new Date()
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  const handleSuggestedQuestion = (question) => {
+    setInputMessage(question);
+  };
+  const toggleSpeechRecognition = () => {
+    if (!isListening) {
+      setIsListening(true);
+      if ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) {
+        const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognitionAPI) {
+          const recognition = new SpeechRecognitionAPI();
+          recognition.lang = "en-US";
+          recognition.interimResults = false;
+          recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            setInputMessage(transcript);
+          };
+          recognition.onerror = () => {
+            setIsListening(false);
+          };
+          recognition.onend = () => {
+            setIsListening(false);
+          };
+          recognition.start();
+        } else {
+          alert("Failed to initialize speech recognition.");
+          setIsListening(false);
+        }
+      } else {
+        alert("Speech recognition is not supported in your browser.");
+        setIsListening(false);
+      }
+    } else {
+      setIsListening(false);
+    }
+  };
+  return /* @__PURE__ */ jsxs("div", { className: "bg-white rounded-lg shadow-md p-4 flex flex-col h-[600px]", children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between mb-4 pb-3 border-b", children: [
+      /* @__PURE__ */ jsx("h2", { className: "text-xl font-semibold text-blue-600", children: "Health Assistant" }),
+      /* @__PURE__ */ jsx("div", { className: "flex gap-2", children: /* @__PURE__ */ jsx("p", { className: "text-sm text-gray-500 italic", children: "Always consult with healthcare professionals for medical advice" }) })
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "flex flex-wrap gap-2 mb-4", children: suggestedQuestions.map((question, index) => /* @__PURE__ */ jsx(
+      "button",
+      {
+        onClick: () => handleSuggestedQuestion(question),
+        className: "text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full hover:bg-blue-100 transition",
+        children: question
+      },
+      index
+    )) }),
+    /* @__PURE__ */ jsxs("div", { className: "flex-1 overflow-y-auto mb-4 space-y-4 p-2", children: [
+      messages.map((message) => /* @__PURE__ */ jsx(
+        "div",
+        {
+          className: `flex ${message.sender === "user" ? "justify-end" : "justify-start"}`,
+          children: /* @__PURE__ */ jsxs(
+            "div",
+            {
+              className: `max-w-[80%] rounded-lg p-3 ${message.sender === "user" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-800"}`,
+              children: [
+                /* @__PURE__ */ jsx("p", { className: "text-sm", children: message.content }),
+                /* @__PURE__ */ jsx("p", { className: "text-xs text-right mt-1 opacity-70", children: message.timestamp.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit"
+                }) })
+              ]
+            }
+          )
+        },
+        message.id
+      )),
+      isProcessing && /* @__PURE__ */ jsx("div", { className: "flex justify-start", children: /* @__PURE__ */ jsxs("div", { className: "bg-gray-100 text-gray-800 rounded-lg p-3 flex items-center", children: [
+        /* @__PURE__ */ jsx(Loader2, { className: "h-4 w-4 animate-spin mr-2" }),
+        /* @__PURE__ */ jsx("p", { className: "text-sm", children: "Processing your request..." })
+      ] }) }),
+      /* @__PURE__ */ jsx("div", { ref: messagesEndRef })
+    ] }),
+    /* @__PURE__ */ jsxs("form", { onSubmit: handleSubmit, className: "flex gap-2", children: [
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          onClick: toggleSpeechRecognition,
+          className: `p-2 rounded-full ${isListening ? "bg-red-500 text-white" : "bg-gray-200 text-gray-700"}`,
+          children: isListening ? /* @__PURE__ */ jsx(MicOff, { size: 20 }) : /* @__PURE__ */ jsx(Mic, { size: 20 })
+        }
+      ),
+      /* @__PURE__ */ jsx(
+        "input",
+        {
+          type: "text",
+          value: inputMessage,
+          onChange: (e) => setInputMessage(e.target.value),
+          placeholder: "Ask a health-related question...",
+          className: "flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400",
+          disabled: isProcessing
+        }
+      ),
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "submit",
+          className: "bg-blue-600 text-white p-2 rounded-lg disabled:opacity-50",
+          disabled: !inputMessage.trim() || isProcessing,
+          children: /* @__PURE__ */ jsx(Send, { size: 20 })
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "mt-3 text-xs text-gray-500 text-center", children: "This assistant provides general health information and is not a substitute for professional medical advice." })
+  ] });
+}
+
 const api_calls = async (data, settings, selectedClarity) => {
   try {
     const userSettingsText = `User Info:
@@ -2405,6 +2597,16 @@ function Dashboard() {
           setLanguageQuery
         }
       ),
+      /* @__PURE__ */ jsxs("div", { className: "mt-6 bg-white rounded-lg shadow-md", children: [
+        /* @__PURE__ */ jsx("h2", { className: "text-xl font-semibold p-4 border-b", children: "Health Assistant Chat" }),
+        /* @__PURE__ */ jsx(
+          HealthChat,
+          {
+            userSettings: settings,
+            selectedClarity
+          }
+        )
+      ] }),
       /* @__PURE__ */ jsxs("div", { className: "bg-white rounded-lg shadow-md p-4", children: [
         /* @__PURE__ */ jsxs("div", { className: "flex space-x-4 mb-4 ", children: [
           /* @__PURE__ */ jsx(
@@ -2545,10 +2747,10 @@ const $$Index = createComponent(async ($$result, $$props, $$slots) => {
       "/WatsonAssistantChatEntry.js";
     document.head.appendChild(t);
   });
-<\/script> `])), renderComponent($$result, "Layout", $$Layout, { "title": "Medlex+" }, { "default": async ($$result2) => renderTemplate` ${maybeRenderHead()}<div> ${renderComponent($$result2, "Dashboard", Dashboard, { "client:load": true, "client:component-hydration": "load", "client:component-path": "/home/stephen/medlex/src/components/dashboard", "client:component-export": "default" })} </div> ` }));
-}, "/home/stephen/medlex/src/pages/index.astro", void 0);
+<\/script> `])), renderComponent($$result, "Layout", $$Layout, { "title": "Medlex+" }, { "default": async ($$result2) => renderTemplate` ${maybeRenderHead()}<div> ${renderComponent($$result2, "Dashboard", Dashboard, { "client:load": true, "client:component-hydration": "load", "client:component-path": "/home/stephen/medlexy/medlex/src/components/dashboard", "client:component-export": "default" })} </div> ` }));
+}, "/home/stephen/medlexy/medlex/src/pages/index.astro", void 0);
 
-const $$file = "/home/stephen/medlex/src/pages/index.astro";
+const $$file = "/home/stephen/medlexy/medlex/src/pages/index.astro";
 const $$url = "";
 
 const _page = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
