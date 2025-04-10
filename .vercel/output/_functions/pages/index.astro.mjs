@@ -5,7 +5,7 @@ import 'clsx';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import React, { useMemo, useRef, useReducer, useEffect, useCallback, forwardRef, useImperativeHandle, Fragment as Fragment$1, useState } from 'react';
 import { RadioGroup, Radio, Listbox, ListboxButton, ListboxOptions, ListboxOption, Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption, TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/react';
-import { ChevronDown, Check, Loader2, Camera, HeartPulse, X, Settings, CircleUserRound, Search, Volume2, Info, Pill, AlertTriangle, Leaf, MicOff, Mic, Send } from 'lucide-react';
+import { ChevronDown, Check, X, Loader2, Camera, HeartPulse, Settings, CircleUserRound, Search, Volume2, Info, Pill, AlertTriangle, Leaf, MicOff, Mic, Send } from 'lucide-react';
 import { IoFemale, IoMale } from 'react-icons/io5';
 import PropTypes from 'prop-types';
 import { fromEvent } from 'file-selector';
@@ -1792,6 +1792,7 @@ function ImageUpload({
   isAnalyzing
 }) {
   const [error, setError] = useState(null);
+  const [preview, setPreview] = useState(null);
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "image/jpeg": [".jpeg", ".jpg"],
@@ -1801,6 +1802,8 @@ function ImageUpload({
     onDrop: async (acceptedFiles) => {
       if (acceptedFiles.length > 0) {
         setError(null);
+        const previewUrl = URL.createObjectURL(acceptedFiles[0]);
+        setPreview(previewUrl);
         try {
           await onImageCapture(acceptedFiles[0]);
           toast.success("Image successfully uploaded");
@@ -1814,21 +1817,44 @@ function ImageUpload({
       toast.error("Invalid file type");
     }
   });
-  return /* @__PURE__ */ jsxs(
-    "div",
-    {
-      ...getRootProps(),
-      className: `flex-1 cursor-pointer ${isDragActive ? "bg-blue-700" : "bg-blue-500"} 
-      text-white p-3 rounded-lg flex items-center justify-center space-x-4
-      hover:bg-[#C62E2E] transition-colors relative`,
-      children: [
-        /* @__PURE__ */ jsx("input", { ...getInputProps() }),
-        isAnalyzing ? /* @__PURE__ */ jsx(Loader2, { className: "h-6 w-6 animate-spin" }) : /* @__PURE__ */ jsx(Camera, { className: "h-6 w-6" }),
-        /* @__PURE__ */ jsx("span", { children: isDragActive ? "Drop the image here" : isAnalyzing ? "Analyzing..." : "Scan Medicine" }),
-        error && /* @__PURE__ */ jsx("div", { className: "absolute bottom-0 left-0 right-0 bg-red-500 text-white p-2 text-sm text-center", children: error })
-      ]
-    }
-  );
+  const clearPreview = (e) => {
+    e.stopPropagation();
+    setPreview(null);
+  };
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-4", children: [
+    preview ? /* @__PURE__ */ jsxs("div", { className: "relative w-full", children: [
+      /* @__PURE__ */ jsx(
+        "img",
+        {
+          src: preview,
+          alt: "Preview",
+          className: "w-full max-h-64 object-contain rounded-lg"
+        }
+      ),
+      !isAnalyzing && /* @__PURE__ */ jsx(
+        "button",
+        {
+          onClick: clearPreview,
+          className: "absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors",
+          children: /* @__PURE__ */ jsx(X, { className: "h-4 w-4" })
+        }
+      )
+    ] }) : null,
+    /* @__PURE__ */ jsxs(
+      "div",
+      {
+        ...getRootProps(),
+        className: `flex-1 cursor-pointer ${isDragActive ? "bg-emerald-100" : "bg-emerald-500"} text-white p-3 rounded-lg flex items-center justify-center space-x-2 
+        hover:bg-emerald-600 transition-colors relative ${preview ? "mt-2" : ""}`,
+        children: [
+          /* @__PURE__ */ jsx("input", { ...getInputProps() }),
+          isAnalyzing ? /* @__PURE__ */ jsx(Loader2, { className: "h-6 w-6 animate-spin" }) : /* @__PURE__ */ jsx(Camera, { className: "h-6 w-6" }),
+          /* @__PURE__ */ jsx("span", { children: isDragActive ? "Drop the image here" : isAnalyzing ? "Analyzing..." : preview ? "Change Image" : "Scan Medicine" }),
+          error && /* @__PURE__ */ jsx("div", { className: "absolute bottom-0 left-0 right-0 bg-red-500 text-white p-2 text-sm text-center", children: error })
+        ]
+      }
+    )
+  ] });
 }
 
 const showToast = (message, type) => {
