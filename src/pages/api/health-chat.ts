@@ -3,6 +3,22 @@ import type { APIRoute } from 'astro';
 import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// Define interfaces for our message types
+interface ChatMessage {
+  sender: 'user' | 'assistant' | string;
+  content: string;
+}
+
+interface OpenAIMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
+interface GeminiMessage {
+  role: 'user' | 'model';
+  parts: { text: string }[];
+}
+
 // Initialize OpenAI with API key from environment variables
 const openai = new OpenAI({
   apiKey: import.meta.env.OPENAI_API_KEY || ''
@@ -35,8 +51,8 @@ You should:
 
 If the user asks non-health related questions, politely redirect them to ask health-related questions only.`;
 
-    let response = null;
-    let error = null;
+    let response: string | null = null;
+    let error: unknown = null;
     
     // Try Gemini first (fixing the chat history format issue)
     if (import.meta.env.GEMINI_API_KEY) {
@@ -44,14 +60,14 @@ If the user asks non-health related questions, politely redirect them to ask hea
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
         
         // Make sure we have at least one user message in history
-        let chatHistory = [];
+        let chatHistory: GeminiMessage[] = [];
         
         if (history.length > 0) {
           // Process history in a way that ensures it starts with a user message
           // Filter to only valid entries and ensure proper format
-          const validHistory = history
+          const validHistory = (history as ChatMessage[])
             .filter(msg => msg && typeof msg === 'object' && msg.sender && msg.content)
-            .map(msg => ({
+            .map((msg: ChatMessage) => ({
               role: msg.sender === 'user' ? 'user' : 'model',
               parts: [{ text: msg.content }]
             }));
@@ -78,9 +94,9 @@ If the user asks non-health related questions, politely redirect them to ask hea
     if (!response && import.meta.env.OPENAI_API_KEY) {
       try {
         // Format chat history for OpenAI
-        const chatHistory = (history || [])
+        const chatHistory = (history as ChatMessage[])
           .filter(msg => msg && typeof msg === 'object' && msg.sender && msg.content)
-          .map((msg: any) => ({
+          .map((msg: ChatMessage): OpenAIMessage => ({
             role: msg.sender === 'user' ? 'user' : 'assistant',
             content: msg.content
           }));
@@ -96,7 +112,7 @@ If the user asks non-health related questions, politely redirect them to ask hea
           max_tokens: 800,
         });
         
-        response = completion.choices[0].message.content;
+        response = completion.choices[0].message.content || '';
       } catch (err) {
         console.log("OpenAI API error, attempting final fallback", err);
         error = err;
@@ -106,9 +122,9 @@ If the user asks non-health related questions, politely redirect them to ask hea
     // If both failed, try Together AI with robust error handling
     if (!response && TOGETHER_API_KEY) {
       try {
-        const formattedHistory = (history || [])
+        const formattedHistory = (history as ChatMessage[])
           .filter(msg => msg && typeof msg === 'object' && msg.sender && msg.content)
-          .map((msg: any) => 
+          .map((msg: ChatMessage) => 
             `${msg.sender === 'user' ? 'Human' : 'Assistant'}: ${msg.content}`
           ).join('\n');
         
