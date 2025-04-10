@@ -1,24 +1,17 @@
-// Add this to the top of your src/components/healthChat.tsx file
-
-// Declare the global interfaces for SpeechRecognition
+import { useState, useRef, useEffect } from "react";
+import { Send, Mic, MicOff, Loader2 } from "lucide-react";
 declare global {
   interface Window {
     SpeechRecognition?: any;
     webkitSpeechRecognition?: any;    
   }
 }
-
-// The rest of your imports
-import { useState, useRef, useEffect } from "react";
-import { Send, Mic, MicOff, Loader2 } from "lucide-react";
-
 interface Message {
   id: string;
   content: string;
   sender: "user" | "assistant";
   timestamp: Date;
 }
-
 interface HealthChatProps {
   userSettings: any;
   selectedClarity: { id: string; label: string };
@@ -71,11 +64,11 @@ export default function HealthChat({ userSettings, selectedClarity }: HealthChat
     try {
       // Format user settings for context
       const userSettingsText = `User Info:
-Sex: ${userSettings.sex.charAt(0).toUpperCase() + userSettings.sex.slice(1)}
-Medical Conditions: ${userSettings.conditions.join(", ") || "None specified"}
-Age Range: ${userSettings.age.range}
-Clarity Level: ${selectedClarity.label}
-Language: ${userSettings.language.name}`;
+        Sex: ${userSettings.sex.charAt(0).toUpperCase() + userSettings.sex.slice(1)}
+        Medical Conditions: ${userSettings.conditions.join(", ") || "None specified"}
+        Age Range: ${userSettings.age.range}
+        Clarity Level: ${selectedClarity.label}
+        Language: ${userSettings.language.name}`;
 
       // Call your AI backend
       const response = await fetch("/api/health-chat", {
@@ -103,11 +96,7 @@ Language: ${userSettings.language.name}`;
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-
-      // Also send to Watson for logging/monitoring if that's how you're using it
-      if (window.sendWatsonMessage) {
-        await window.sendWatsonMessage(`User question: ${inputMessage}\nAssistant response: ${data.response}`);
-      }
+    
     } catch (error) {
       // Handle error
       const errorMessage: Message = {
@@ -129,8 +118,7 @@ Language: ${userSettings.language.name}`;
   const toggleSpeechRecognition = () => {
     if (!isListening) {
       // Start listening
-      setIsListening(true);
-      
+      setIsListening(true);      
       if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
         // Use the Speech Recognition API
         const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -170,11 +158,11 @@ Language: ${userSettings.language.name}`;
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 flex flex-col h-[600px]">
+    <div className="bg-white rounded-lg shadow-lg p-4 flex flex-col h-[600px]">
       <div className="flex items-center justify-between mb-4 pb-3 border-b">
         <h2 className="text-xl font-semibold text-blue-600">Health Assistant</h2>
         <div className="flex gap-2">
-          <p className="text-sm text-gray-500 italic">
+          <p className="text-sm text-black-500 italic">
             Always consult with healthcare professionals for medical advice
           </p>
         </div>
@@ -258,7 +246,7 @@ Language: ${userSettings.language.name}`;
         </button>
       </form>
       
-      <div className="mt-3 text-xs text-gray-500 text-center">
+      <div className="mt-3 text-xs text-black-500 text-center">
         This assistant provides general health information and is not a substitute for professional medical advice.
       </div>
     </div>
