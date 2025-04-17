@@ -18,7 +18,7 @@ export default defineConfig({
   output: "server",
   adapter: vercel({
     //functionPerRoute: false, 
-    // runtime: 'nodejs20.x',
+     runtime: 'nodejs20.x',
   
   }),
   buildOptions: {
