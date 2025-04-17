@@ -1,4 +1,4 @@
-import { clsx, type ClassValue } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import type { UserSettings } from "@/components/settings/options";
 import { defaultSettings } from "@/components/settings/options";
