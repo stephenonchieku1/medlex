@@ -3,6 +3,9 @@
   "include": [".astro/types.d.ts", "**/*"],
   "exclude": ["dist"],
   "compilerOptions": {
+    "strict": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "types": ["astro/client"],
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "baseUrl": ".",
@@ -12,5 +15,4 @@
       ]
     }
   }
-  
 }
