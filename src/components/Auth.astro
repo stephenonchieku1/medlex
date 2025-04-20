@@ -1,0 +1,143 @@
+---
+// Import statements at the top
+import { setAuthToken, redirectToDashboard, login, signup } from '../utils/auth';
+
+// Define the component props
+interface Props {
+  client: {
+    load: boolean;
+  };
+}
+
+// Get the component props
+const { client } = Astro.props;
+---
+
+<form id="auth-form" class="mt-8 space-y-6">
+  <div class="rounded-md shadow-sm -space-y-px">
+    <div>
+      <label for="email-address" class="sr-only">Email address</label>
+      <input
+        id="email-address"
+        name="email"
+        type="email"
+        autocomplete="email"
+        required
+        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+        placeholder="Email address"
+      />
+    </div>
+    <div>
+      <label for="password" class="sr-only">Password</label>
+      <input
+        id="password"
+        name="password"
+        type="password"
+        autocomplete="current-password"
+        required
+        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+        placeholder="Password"
+      />
+    </div>
+    <div id="password-confirmation-container" class="hidden">
+      <label for="password-confirmation" class="sr-only">Confirm Password</label>
+      <input
+        id="password-confirmation"
+        name="password_confirmation"
+        type="password"
+        autocomplete="new-password"
+        required
+        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+        placeholder="Confirm Password"
+      />
+    </div>
+  </div>
+
+  <div id="error-message" class="text-red-500 text-sm text-center hidden"></div>
+
+  <div>
+    <button
+      type="submit"
+      class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+    >
+      <span id="submit-text">Sign in</span>
+    </button>
+  </div>
+
+  <div class="text-center">
+    <button
+      type="button"
+      id="toggle-auth"
+      class="text-sm text-blue-600 hover:text-blue-500"
+    >
+      Don't have an account? Sign up
+    </button>
+  </div>
+</form>
+
+<script define:vars={{ setAuthToken, redirectToDashboard, login, signup }}>
+  // Client-side JavaScript
+  let email = '';
+  let password = '';
+  let passwordConfirmation = '';
+  let isSignUp = false;
+  let error = '';
+  
+  const form = document.getElementById('auth-form');
+  const emailInput = document.getElementById('email-address');
+  const passwordInput = document.getElementById('password');
+  const passwordConfirmationInput = document.getElementById('password-confirmation');
+  const passwordConfirmationContainer = document.getElementById('password-confirmation-container');
+  const errorMessage = document.getElementById('error-message');
+  const submitText = document.getElementById('submit-text');
+  const toggleAuth = document.getElementById('toggle-auth');
+  
+  // Initialize form elements
+  if (emailInput && passwordInput && passwordConfirmationInput && passwordConfirmationContainer && errorMessage && submitText && toggleAuth) {
+    // Handle form submission
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      error = '';
+      errorMessage.textContent = '';
+      errorMessage.classList.add('hidden');
+      
+      email = emailInput.value;
+      password = passwordInput.value;
+      passwordConfirmation = passwordConfirmationInput.value;
+      
+      // Validate passwords match for signup
+      if (isSignUp && password !== passwordConfirmation) {
+        error = 'Passwords do not match';
+        errorMessage.textContent = error;
+        errorMessage.classList.remove('hidden');
+        return;
+      }
+      
+      try {
+        const response = isSignUp 
+          ? await signup(email, password, passwordConfirmation)
+          : await login(email, password);
+
+        if (response.token) {
+          setAuthToken(response.token);
+          redirectToDashboard();
+        }
+      } catch (err) {
+        error = err.message;
+        errorMessage.textContent = error;
+        errorMessage.classList.remove('hidden');
+      }
+    });
+    
+    // Toggle between sign in and sign up
+    toggleAuth.addEventListener('click', () => {
+      isSignUp = !isSignUp;
+      submitText.textContent = isSignUp ? 'Sign up' : 'Sign in';
+      toggleAuth.textContent = isSignUp 
+        ? 'Already have an account? Sign in' 
+        : "Don't have an account? Sign up";
+      passwordConfirmationContainer.classList.toggle('hidden', !isSignUp);
+      passwordConfirmationInput.required = isSignUp;
+    });
+  }
+</script>
