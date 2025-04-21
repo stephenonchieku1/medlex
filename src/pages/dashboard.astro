@@ -1,8 +1,74 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import DashboardComponent from '../components/dashboard';
+import { getAuthToken, removeAuthToken, redirectToLogin, getCurrentUser, logout } from '../utils/auth';
 ---
 
-<Layout title="Dashboard - MedLex AI">
-  <DashboardComponent client:load />
+<Layout title="Dashboard">
+  <div class="min-h-screen bg-gray-100">
+    <nav class="bg-white shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex">
+            <div class="flex-shrink-0 flex items-center">
+              <h1 class="text-xl font-bold text-gray-900">Dashboard</h1>
+            </div>
+          </div>
+          <div class="flex items-center">
+            <span id="userEmail" class="text-gray-700 mr-4">Loading...</span>
+            <button
+              id="logoutButton"
+              class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <div class="px-4 py-6 sm:px-0">
+        <div class="border-4 border-dashed border-gray-200 rounded-lg h-96 p-4">
+          <h2 class="text-2xl font-bold mb-4">Welcome to your Dashboard</h2>
+          <p class="text-gray-600">This is a protected page that only authenticated users can access.</p>
+        </div>
+      </div>
+    </main>
+  </div>
 </Layout>
+
+<script define:vars={{ getAuthToken, removeAuthToken, redirectToLogin, getCurrentUser, logout }}>
+  // Check authentication and fetch user data on client side
+  const token = getAuthToken();
+  if (!token) {
+    redirectToLogin();
+  } else {
+    // Fetch user data
+    getCurrentUser()
+      .then(user => {
+        const userEmailElement = document.getElementById('userEmail');
+        if (userEmailElement) {
+          userEmailElement.textContent = `Welcome, ${user.email}`;
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching user data:', error);
+        removeAuthToken();
+        redirectToLogin();
+      });
+  }
+
+  // Handle logout
+  const logoutButton = document.getElementById('logoutButton');
+  if (logoutButton) {
+    logoutButton.addEventListener('click', async () => {
+      try {
+        await logout();
+      } catch (error) {
+        console.error('Logout failed:', error);
+      } finally {
+        redirectToLogin();
+      }
+    });
+  }
+</script>
