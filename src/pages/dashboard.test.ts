@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/react';
 import Dashboard from './dashboard.astro';
+import '@testing-library/jest-dom';
 
 // Mock the auth utility functions
 vi.mock('../utils/auth', () => ({
